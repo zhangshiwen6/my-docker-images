@@ -1,1 +1,31 @@
 
+name: Download and Package Docker Images
+
+on:
+  workflow_dispatch: # 允许你手动点击按钮触发运行
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pull and Save Images
+        run: |
+          docker pull openmetadata/server:1.2.0
+          docker pull openmetadata/ingestion:1.2.0
+          docker pull postgres:15
+          docker pull elasticsearch:7.16.3
+          
+          docker save -o openmetadata_images.tar \
+            openmetadata/server:1.2.0 \
+            openmetadata/ingestion:1.2.0 \
+            postgres:15 \
+            elasticsearch:7.16.3
+            
+          tar -czvf openmetadata_images.tar.gz openmetadata_images.tar
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-bundle
+          path: openmetadata_images.tar.gz
+          retention-days: 1
