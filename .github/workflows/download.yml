@@ -1,7 +1,7 @@
 name: Download and Package Docker Images
 
 on:
-  workflow_dispatch: # 允许你手动点击按钮触发运行
+  workflow_dispatch: {} # <--- 加上大括号，修复无触发器报错
 
 jobs:
   build:
@@ -9,20 +9,17 @@ jobs:
     steps:
       - name: Pull and Save Images
         run: |
-          # 1. 登录云服务器直接下载官方镜像
           docker pull openmetadata/server:1.2.0
           docker pull openmetadata/ingestion:1.2.0
           docker pull postgres:15
           docker pull elasticsearch:7.16.3
           
-          # 2. 打包
           docker save -o openmetadata_images.tar \
             openmetadata/server:1.2.0 \
             openmetadata/ingestion:1.2.0 \
             postgres:15 \
             elasticsearch:7.16.3
             
-          # 3. 压缩一下减小文件体积，方便你下载
           tar -czvf openmetadata_images.tar.gz openmetadata_images.tar
 
       - name: Upload Artifact
@@ -30,4 +27,4 @@ jobs:
         with:
           name: docker-bundle
           path: openmetadata_images.tar.gz
-          retention-days: 1 # 下载完自动销毁，节约空间
+          retention-days: 1
