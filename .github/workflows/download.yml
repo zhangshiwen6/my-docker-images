@@ -1,6 +1,6 @@
 name: Split and Release Images
 on: 
-  workflow_dispatch:
+  workflow_dispatch: {}
 
 permissions:
   contents: write # 必须赋予写权限，GitHub 才能自动帮你创建 Release 下载页面
