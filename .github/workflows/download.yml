@@ -1,30 +1,37 @@
-name: Download and Package Docker Images
+name: Split and Release Images
+on: 
+  workflow_dispatch:
 
-on:
-  workflow_dispatch: {} # <--- 加上大括号，修复无触发器报错
+permissions:
+  contents: write # 必须赋予写权限，GitHub 才能自动帮你创建 Release 下载页面
 
 jobs:
-  build:
+  split-and-release:
     runs-on: ubuntu-latest
     steps:
-      - name: Pull and Save Images
+      - name: Pull Docker Images
         run: |
-          docker pull openmetadata/server:1.2.0
-          docker pull openmetadata/ingestion:1.2.0
-          docker pull postgres:15
-          docker pull elasticsearch:7.16.3
+          docker pull docker.getcollate.io/openmetadata/db:1.5.4
+          docker pull docker.getcollate.io/openmetadata/server:1.5.4
+          docker pull docker.getcollate.io/openmetadata/ingestion:1.5.4
+          docker pull docker.elastic.co/elasticsearch/elasticsearch:8.10.2
           
-          docker save -o openmetadata_images.tar \
-            openmetadata/server:1.2.0 \
-            openmetadata/ingestion:1.2.0 \
-            postgres:15 \
-            elasticsearch:7.16.3
-            
-          tar -czvf openmetadata_images.tar.gz openmetadata_images.tar
-
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v4
+      - name: Compress and Split Images
+        run: |
+          mkdir dist
+          # 将镜像打包、用 gzip 压缩、并切分成每个最大 200M 的小块
+          docker save docker.getcollate.io/openmetadata/db:1.5.4 | gzip | split -b 200m - dist/om-db.tar.gz.
+          docker save docker.getcollate.io/openmetadata/server:1.5.4 | gzip | split -b 200m - dist/om-server.tar.gz.
+          docker save docker.getcollate.io/openmetadata/ingestion:1.5.4 | gzip | split -b 200m - dist/om-ingestion.tar.gz.
+          docker save docker.elastic.co/elasticsearch/elasticsearch:8.10.2 | gzip | split -b 200m - dist/om-es.tar.gz.
+          
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
         with:
-          name: docker-bundle
-          path: openmetadata_images.tar.gz
-          retention-days: 1
+          tag_name: v1.5.4
+          name: "OpenMetadata 镜像分块下载专区"
+          draft: false
+          prerelease: false
+          files: dist/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # 官方自带密钥，无需手动配置
