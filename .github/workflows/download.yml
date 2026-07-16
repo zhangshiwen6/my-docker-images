@@ -13,25 +13,12 @@ jobs:
     steps:
       - name: Pull Docker Images
         run: |
-          docker pull docker.getcollate.io/openmetadata/db:1.13.1
-          docker pull docker.getcollate.io/openmetadata/server:1.13.1
-          docker pull docker.getcollate.io/openmetadata/ingestion:1.13.1
-          docker pull docker.elastic.co/elasticsearch/elasticsearch:8.10.2
+          docker pull docker.elastic.co/elasticsearch/elasticsearch:8.16.1
 
       - name: Compress and Split Images
         run: |
           mkdir dist
-
-          docker save docker.getcollate.io/openmetadata/db:1.13.1 \
-            | gzip | split -b 200m - dist/om-db.tar.gz.
-
-          docker save docker.getcollate.io/openmetadata/server:1.13.1 \
-            | gzip | split -b 200m - dist/om-server.tar.gz.
-
-          docker save docker.getcollate.io/openmetadata/ingestion:1.13.1 \
-            | gzip | split -b 200m - dist/om-ingestion.tar.gz.
-
-          docker save docker.elastic.co/elasticsearch/elasticsearch:8.10.2 \
+          docker save docker.elastic.co/elasticsearch/elasticsearch:8.16.1 \
             | gzip | split -b 200m - dist/om-es.tar.gz.
 
       - name: Create GitHub Release
