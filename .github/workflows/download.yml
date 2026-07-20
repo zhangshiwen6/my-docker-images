@@ -11,15 +11,21 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Install Progress Tool (pv)
+        run: sudo apt-get update && sudo apt-get install -y pv
+
       - name: Pull Docker Images
         run: |
-          docker pull opensearchproject/opensearch:2.11.1
+          docker pull docker.elastic.co/elasticsearch/elasticsearch:8.11.4
 
       - name: Compress and Split Images
         run: |
-          mkdir dist
-          docker save opensearchproject/opensearch:2.11.1 \
-            | gzip | split -b 200m - dist/om-opensearch.tar.gz.
+          mkdir -p dist
+          # 使用 pv 实时显示进度
+          docker save docker.elastic.co/elasticsearch/elasticsearch:8.11.4 \
+            | pv -s 2200M \
+            | gzip -c \
+            | split -b 200m - dist/om-es.tar.gz.
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
